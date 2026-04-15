@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MemPalace PR Triage Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e;
+    --green: #3fb950; --green-bg: rgba(63,185,80,0.1);
+    --yellow: #d29922; --yellow-bg: rgba(210,153,34,0.1);
+    --red: #f85149; --red-bg: rgba(248,81,73,0.1);
+    --blue: #58a6ff; --blue-bg: rgba(88,166,255,0.1);
+    --purple: #bc8cff; --purple-bg: rgba(188,140,255,0.1);
+    --orange: #f0883e; --orange-bg: rgba(240,136,62,0.1);
+    --cyan: #39d2c0; --cyan-bg: rgba(57,210,192,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 2rem; max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem; }
+  .stats { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; min-width: 120px; }
+  .stat-card .number { font-size: 1.5rem; font-weight: 700; }
+  .stat-card .label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .c-merged .number { color: var(--blue); }
+  .c-closed .number { color: var(--red); }
+  .c-open .number { color: var(--yellow); }
+  .c-version .number { color: var(--green); }
+  .section { margin-bottom: 2.5rem; }
+  .section-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .section-header h2 { font-size: 1.05rem; font-weight: 600; }
+  .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-orange { background: var(--orange-bg); color: var(--orange); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); font-size: 0.85rem; }
+  th { text-align: left; padding: 0.5rem 0.75rem; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
+  td { padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover { background: rgba(255,255,255,0.02); }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .pr-num { font-weight: 600; white-space: nowrap; }
+  .pr-size { color: var(--text-muted); font-family: monospace; font-size: 0.75rem; white-space: nowrap; }
+  .v { font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: 600; white-space: nowrap; display: inline-block; }
+  .v-merge { background: var(--green-bg); color: var(--green); }
+  .v-merged { background: var(--blue-bg); color: var(--blue); }
+  .v-comment { background: var(--yellow-bg); color: var(--yellow); }
+  .v-changes { background: var(--orange-bg); color: var(--orange); }
+  .notes { color: var(--text-muted); font-size: 0.8rem; }
+  .info-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem; }
+  .info-box h3 { font-size: 0.95rem; margin-bottom: 0.75rem; }
+  .info-box ul { padding-left: 1.25rem; color: var(--text-muted); font-size: 0.85rem; }
+  .info-box li { margin-bottom: 0.25rem; }
+  .info-box code { background: rgba(255,255,255,0.05); padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; color: var(--text); }
+  .timestamp { color: var(--text-muted); font-size: 0.8rem; text-align: right; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<h1>MemPalace PR Triage Dashboard</h1>
+<p class="subtitle">MemPalace/mempalace &mdash; v3.3.0 released &mdash; Started Apr 11 with 213 open PRs</p>
+
+<div class="stats">
+  <div class="stat-card c-version"><div class="number">v3.3.0</div><div class="label">Latest release</div></div>
+  <div class="stat-card c-merged"><div class="number">75+</div><div class="label">Merged since Apr 11</div></div>
+  <div class="stat-card c-closed"><div class="number">50+</div><div class="label">Closed</div></div>
+  <div class="stat-card c-open"><div class="number">198</div><div class="label">Open PRs total</div></div>
+</div>
+
+<!-- Releases -->
+<div class="info-box">
+  <h3>Releases shipped during triage</h3>
+  <ul>
+    <li><strong>v3.3.0</strong> (Apr 14) &mdash; ChromaBackend refactor, SECURITY.md, verbose toggle, hook auto-mine, KG locks, regex optimization, version guard</li>
+    <li><strong>v3.2.0</strong> (Apr 13) &mdash; Closet layer, BM25 hybrid search, fact checker, cross-wing tunnels, file locking, entity metadata, drawer-grep</li>
+    <li><strong>v3.1.1</strong> (effectively) &mdash; Our 24 merged bug fixes and security hardening</li>
+  </ul>
+</div>
+
+<!-- Infrastructure -->
+<div class="info-box">
+  <h3>Infrastructure (completed)</h3>
+  <ul>
+    <li>Repo transferred to <strong>MemPalace</strong> org</li>
+    <li><code>develop</code> default branch, branch protection on <code>main</code>/<code>develop</code>/<code>release/*</code></li>
+    <li>Release branches: <code>release/3.0</code>, <code>release/3.1</code>, <code>release/3.2.0</code></li>
+    <li>CI on develop (#674), ruff format (#675), ROADMAP.md</li>
+    <li>RFC #737: Storage backend plugin specification</li>
+    <li>Issue #680: Community notice re @web3guru888 promotional activity</li>
+    <li>Issue #903: Embedding model mismatch (MiniLM vs mpnet dimension bug)</li>
+  </ul>
+</div>
+
+<!-- Merged this session (Apr 15) -->
+<div class="section">
+  <div class="section-header">
+    <h2>Batch Merged (Apr 15)</h2>
+    <span class="badge badge-blue">10 PRs &mdash; reviewed, approved, merged</span>
+  </div>
+  <table>
+    <thead><tr><th>PR</th><th>Title</th><th>Author</th><th>Verdict</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/862">#862</a></td><td>Clarify init requires dir (docs)</td><td>@arnoldwender</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Docs only</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/811">#811</a></td><td>Make entity_registry.research() local-only</td><td>@Kesshite</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Gates Wikipedia calls, fixes 404 data poisoning</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/831">#831</a></td><td>Return empty status on cold-start palace</td><td>@mvalentsev</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Avoids accidental palace creation</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/865">#865</a></td><td>Guard empty ChromaDB query results</td><td>@arnoldwender</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Defensive fix for #195</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/866">#866</a></td><td>Auto-add palace files to .gitignore</td><td>@arnoldwender</td><td><span class="v v-merged">MERGED</span></td><td class="notes">UX improvement on init</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/864">#864</a></td><td>Redirect stdout to stderr for MCP JSON-RPC</td><td>@arnoldwender</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Long-standing #225, Windows fix</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/863">#863</a></td><td>Fix precompact hook blocking compaction</td><td>@mvalentsev</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Critical fix for #856/#858</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/846">#846</a></td><td>Include created_at timestamp in search results</td><td>@sha2fiddy</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Reads existing metadata</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/815">#815</a></td><td>Slack provenance header + speaker IDs</td><td>@Kesshite</td><td><span class="v v-merged">MERGED</span></td><td class="notes">Security hardening for Slack imports</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/814">#814</a></td><td>Restrict file permissions on palace data</td><td>@Kesshite</td><td><span class="v v-merged">MERGED</span></td><td class="notes">chmod 0o600/0o700 on sensitive files</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- PR #839 code review -->
+<div class="section">
+  <div class="section-header">
+    <h2>Code Review: PR #839 (release v3.3.0)</h2>
+    <span class="badge badge-orange">6 issues found</span>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>File</th><th>Score</th><th>Issue</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>diary_ingest.py</code></td><td>92</td><td class="notes">Missing <code>normalize_version</code> on drawer metadata &mdash; diary drawers treated as stale every run</td></tr>
+      <tr><td>2</td><td><code>mcp_server.py</code></td><td>88</td><td class="notes"><code>tool_add_drawer</code> missing <code>normalize_version</code> &mdash; MCP drawers silently purged on next mine</td></tr>
+      <tr><td>3</td><td><code>searcher.py</code></td><td>85</td><td class="notes">Drawer ref regex <code>[\w,]+</code> truncates hyphenated IDs &mdash; closet hydration fails silently</td></tr>
+      <tr><td>4</td><td><code>pyproject.toml</code></td><td>85</td><td class="notes">Still has <code>milla-jovovich</code> org URLs despite CHANGELOG claiming fix</td></tr>
+      <tr><td>5</td><td><code>docs/CLOSETS.md</code></td><td>85</td><td class="notes">Says BM25 "on the roadmap" but it's shipped; references non-existent function</td></tr>
+      <tr><td>6</td><td><code>searcher.py</code></td><td>85</td><td class="notes">Dead code <code>_expand_with_neighbors()</code> defined but never called in production</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Reviewed & ready to merge -->
+<div class="section">
+  <div class="section-header">
+    <h2>Reviewed &amp; Ready to Merge</h2>
+    <span class="badge badge-green">4 PRs &mdash; code review passed</span>
+  </div>
+  <table>
+    <thead><tr><th>PR</th><th>Title</th><th>Size</th><th>Author</th><th>Verdict</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/894">#894</a></td><td>Fix AAAK "lossless" claim in dialect.py docs</td><td class="pr-size">+0/-0</td><td>@moltate</td><td><span class="v v-merge">MERGE</span></td><td class="notes">Doc correction only</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/857">#857</a></td><td>Init: create directory if missing, normalize path</td><td class="pr-size">+10/-1</td><td>@iron-prog</td><td><span class="v v-merge">MERGE</span></td><td class="notes">UX improvement</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/783">#783</a></td><td>ensure_ascii=False in MCP json.dumps</td><td class="pr-size">+7/-3</td><td>@OmkarKirpan</td><td><span class="v v-merge">MERGE</span></td><td class="notes">i18n fix</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/778">#778</a></td><td>Add Indonesian language support</td><td class="pr-size">+45/-0</td><td>@dominosaurs</td><td><span class="v v-merge">MERGE</span></td><td class="notes">i18n addition</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Merge with comment -->
+<div class="section">
+  <div class="section-header">
+    <h2>Merge with Comment</h2>
+    <span class="badge badge-yellow">4 PRs &mdash; minor issues noted, not blocking</span>
+  </div>
+  <table>
+    <thead><tr><th>PR</th><th>Title</th><th>Size</th><th>Author</th><th>Score</th><th>Issue</th></tr></thead>
+    <tbody>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/817">#817</a></td><td>Normalize palace_path + validate KG dates</td><td class="pr-size">+120/-14</td><td>@Kesshite</td><td>82</td><td class="notes"><code>abspath</code> resolves <code>..</code> but doesn't verify result stays in expected base</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/796">#796</a></td><td>Batch upserts for ChromaDB 1.5.x crashes</td><td class="pr-size">+48/-12</td><td>@IzmanIzy</td><td>82</td><td class="notes"><code>collection=None</code> after checkpoint failure silently drops chunks</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/861">#861</a></td><td>Support --palace after subcommands</td><td class="pr-size">+65/-10</td><td>@iron-prog</td><td>85</td><td class="notes"><code>os.environ</code> side-effect from CLI flag bleeds into subprocesses</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/889">#889</a></td><td>Reduce chunk size for embedding token limit</td><td class="pr-size">+56/-6</td><td>@sha2fiddy</td><td>--</td><td class="notes">Checks failing &mdash; needs fix before merge</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Needs changes -->
+<div class="section">
+  <div class="section-header">
+    <h2>Needs Changes</h2>
+    <span class="badge badge-orange">Rebase or rework required</span>
+  </div>
+  <table>
+    <thead><tr><th>PR</th><th>Title</th><th>Size</th><th>Author</th><th>Issue</th></tr></thead>
+    <tbody>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/893">#893</a></td><td>Harden hooks, MCP, config (security audit)</td><td class="pr-size">+57/-24</td><td>@brodsky754</td><td class="notes">Conflicting. Must rebase onto merged #863 first.</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/851">#851</a></td><td>Paginate status() metadata fetch</td><td class="pr-size">+14/-8</td><td>@vnguyen-lexipol</td><td class="notes">Checks failing &mdash; needs fix</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/782">#782</a></td><td>Disable ChromaDB telemetry (posthog)</td><td class="pr-size">+37/-17</td><td>@OmkarKirpan</td><td class="notes">Conflicting &mdash; needs rebase</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Not yet reviewed -->
+<div class="section">
+  <div class="section-header">
+    <h2>Not Yet Reviewed</h2>
+    <span class="badge badge-yellow">4 PRs remaining</span>
+  </div>
+  <table>
+    <thead><tr><th>PR</th><th>Title</th><th>Size</th><th>Author</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/900">#900</a></td><td>Project tracking + resumable context packs</td><td class="pr-size">--</td><td>@yanlai3210</td><td class="notes">Review required</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/833">#833</a></td><td>Real python-resolution for .sh hooks</td><td class="pr-size">+301/-5</td><td>@igorls</td><td class="notes">Hook infrastructure, conflicting</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/805">#805</a></td><td>mempalace-mcp entry point for uv</td><td class="pr-size">+131/-68</td><td>@ichoosetoaccept</td><td class="notes">Packaging, conflicting</td></tr>
+      <tr><td class="pr-num"><a href="https://github.com/MemPalace/mempalace/pull/890">#890</a></td><td>Release Chroma handles before migrate swap (Windows)</td><td class="pr-size">+152/-12</td><td>@fuzzymoomoo</td><td class="notes">Windows fix</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Closed this session -->
+<div class="info-box">
+  <h3>Closed this session (50+)</h3>
+  <ul>
+    <li><strong>Superseded by merges:</strong> #612, #589, #564, #542, #499, #482, #459, #435, #427, #423, #310, #307, #198, #91, #62, #34, #625, #633, #356, #197, #623, #316, #379, #429, #150, #151, #167, #505, #501, #261, #262, #626, #879, #803, #892</li>
+    <li><strong>Promotional:</strong> #592, #591, #593, #588</li>
+    <li><strong>Waiting for NLP:</strong> #433 (regex contradiction), #182 (regex PII), #349 (regex entity filter)</li>
+    <li><strong>Duplicate:</strong> #841 (telemetry, overlaps #782)</li>
+    <li><strong>Scope creep:</strong> #844 (29K line "Chinese support" that was a full repo rewrite)</li>
+  </ul>
+</div>
+
+<!-- Tracking -->
+<div class="info-box">
+  <h3>Tracking issues</h3>
+  <ul>
+    <li><strong>#903</strong> &mdash; Embedding model mismatch: MCP uses MiniLM (384-dim), ingest uses mpnet (768-dim). Fix ready on private v4-update branch.</li>
+    <li><strong>#737</strong> &mdash; RFC: Storage backend plugin spec</li>
+    <li><strong>#680</strong> &mdash; Community notice re @web3guru888 promotional content</li>
+    <li><strong>#590</strong> &mdash; JSONL 49% content loss &mdash; fixed by #695 + #708; #767 for tool_use extraction was closed, may need new PR</li>
+    <li><strong>#585</strong> &mdash; Corrupt sqlite3 unrecoverable &mdash; no fix yet</li>
+    <li><strong>#326</strong> &mdash; mempalace.tech malicious JS &mdash; README warning added</li>
+  </ul>
+</div>
+
+<p class="timestamp">Updated 2026-04-15 &mdash; v3.3.0 released &mdash; 75+ merged, 50+ closed, 198 open (started with 213) &mdash; 10 PRs batch-merged today, PR #839 code-reviewed (6 issues)</p>
+
+</body>
+</html>

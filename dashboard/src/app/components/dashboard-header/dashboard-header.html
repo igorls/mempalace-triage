@@ -1,0 +1,29 @@
+<div class="flex items-baseline justify-between flex-wrap gap-6">
+  <div>
+    <h1 class="text-4xl font-bold tracking-tight">
+      MemPalace <span class="text-accent-blue">Triage</span>
+    </h1>
+    <p class="text-sm text-fg-muted mt-2 flex items-center gap-2 flex-wrap">
+      <span class="font-mono">MemPalace/mempalace</span>
+      <span class="text-fg-muted/60">·</span>
+      <span class="inline-flex items-center gap-2">
+        <span
+          class="inline-block w-2.5 h-2.5 rounded-full"
+          [class]="dotClass()"
+          aria-hidden="true"
+        ></span>
+        <span class="uppercase tracking-wider text-[11px]">
+          {{ connectionState() }}
+        </span>
+      </span>
+    </p>
+  </div>
+  <div class="text-right text-xs text-fg-muted space-y-1">
+    <div>Public read-only dashboard</div>
+    @if (lastUpdated(); as ts) {
+      <div>
+        Last update: <span class="tabular-nums">{{ ts | date: 'HH:mm:ss' }}</span>
+      </div>
+    }
+  </div>
+</div>

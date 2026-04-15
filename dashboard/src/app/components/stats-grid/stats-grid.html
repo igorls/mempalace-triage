@@ -1,0 +1,51 @@
+@if (stats(); as s) {
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <app-stat-card [value]="s.openPrs" label="Open PRs" tone="blue" />
+    <app-stat-card [value]="s.openIssues" label="Open issues" tone="yellow" />
+    <app-stat-card
+      [value]="s.heuristicCritical"
+      label="Critical"
+      subtitle="heuristic severity"
+      tone="red"
+    />
+    <app-stat-card
+      [value]="s.heuristicHigh"
+      label="High"
+      subtitle="heuristic severity"
+      tone="orange"
+    />
+    <app-stat-card [value]="s.activeClaims" label="Active claims" tone="cyan" />
+    <app-stat-card [value]="s.inProgress" label="In progress" tone="green" />
+  </div>
+
+  <!-- Dedicated suspicion breakdown row: one card per tier so the granularity
+       is legible at a glance, not buried in a single "47 flagged" number. -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+    <app-stat-card
+      [value]="s.suspicionCritical"
+      label="Exec risk"
+      subtitle="eval / shell / curl|bash in diff"
+      tone="red"
+    />
+    <app-stat-card
+      [value]="s.suspicionHigh"
+      label="Trust boundary"
+      subtitle="hook scripts · CI workflows"
+      tone="orange"
+    />
+    <app-stat-card
+      [value]="s.suspicionMedium"
+      label="Supply-chain"
+      subtitle="deps · lockfile · LICENSE"
+      tone="purple"
+    />
+    <app-stat-card
+      [value]="s.suspicionLow"
+      label="Large diff"
+      subtitle="+2000 lines or more"
+      tone="yellow"
+    />
+  </div>
+} @else {
+  <div class="text-fg-muted text-sm">Waiting for snapshot…</div>
+}

@@ -1,0 +1,29 @@
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  @for (col of columns(); track col.label) {
+    <div class="rounded-lg border border-border bg-surface p-5">
+      <div class="flex items-center gap-3 mb-4">
+        <app-badge [label]="col.label" [tone]="col.tone" />
+        <span class="text-xs text-fg-muted">{{ col.items.length }} items</span>
+      </div>
+      @if (col.items.length > 0) {
+        <ul class="space-y-3 text-sm">
+          @for (item of col.items; track item.number) {
+            <li class="leading-snug">
+              <a
+                [href]="githubUrl(item)"
+                target="_blank"
+                rel="noopener"
+                class="font-semibold text-accent-blue hover:underline tabular-nums"
+                >#{{ item.number }}</a
+              >
+              <span class="ml-1 text-fg">{{ item.title }}</span>
+              <div class="text-fg-muted text-xs mt-0.5">&#64;{{ item.author }}</div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="text-fg-muted text-sm italic">empty</p>
+      }
+    </div>
+  }
+</div>

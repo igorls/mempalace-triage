@@ -1,13 +1,23 @@
-# Cache from sync_issues.py — fetched issue/PR/diff data, 6h TTL
+# Cache from the triage module — fetched issue/PR/diff data, 6h TTL
 .cache/
 
 # Generated triage output — point-in-time, not tracked
 ISSUES.md
 TRIAGE.md
 
-# Python
-__pycache__/
-*.pyc
+# Node / Bun / Angular
+node_modules/
+dist/
+.angular/
+*.tsbuildinfo
+
+# SQLite DB for the server (local-only)
+server/triage.db*
+server/*.db
+server/*.db-*
+
+# PM2 logs
+logs/
 
 # Editors
 .idea/

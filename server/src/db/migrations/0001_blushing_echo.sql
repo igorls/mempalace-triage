@@ -1,0 +1,1 @@
+ALTER TABLE `triage_items` ADD `suspicion_level` text DEFAULT 'none' NOT NULL;

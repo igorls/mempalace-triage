@@ -9,18 +9,22 @@ itself.
 
 ## What's here
 
-| File | Purpose |
+| Path | Purpose |
 |---|---|
-| [`sync_issues.py`](sync_issues.py) | Heuristic classifier — fetches issues/PRs from the upstream repo, tags severity by keyword, flags noise candidates and suspicious PRs, cross-references mempalace modules. Writes `ISSUES.md`. |
-| [`.claude/skills/triage-issues/SKILL.md`](.claude/skills/triage-issues/SKILL.md) | Deep-triage skill — drives the part heuristics can't do (semantic dedup, real severity assessment, PR malicious review, next-action ranking). Writes `TRIAGE.md`. |
+| [`server/src/triage/`](server/src/triage/) | Heuristic classifier module (TypeScript/Bun). Fetches issues/PRs from the upstream repo, tags severity by keyword, flags noise candidates and suspicious PRs, cross-references mempalace modules. Exposed as both a library (consumed by the poller) and a CLI (writes `ISSUES.md`). |
+| [`server/`](server/) | Bun + Elysia + Drizzle + SQLite backend. Polls the triage module every 15 min, persists state, serves REST + WebSocket for the dashboard. |
+| [`dashboard/`](dashboard/) | Angular 21 + Tailwind 4 frontend that talks to the server. |
+| [`.claude/skills/triage-issues/SKILL.md`](.claude/skills/triage-issues/SKILL.md) | Deep-triage skill — drives the part heuristics can't do (semantic dedup, real severity, PR malicious review, next-action ranking). Writes `TRIAGE.md`. |
 
 ## Quickstart (local)
 
 ```bash
-# Requires gh CLI, authenticated to read MemPalace/mempalace
-python sync_issues.py              # regenerate ISSUES.md
-python sync_issues.py --audit-prs  # terminal report on flagged PRs
-python sync_issues.py --no-cache   # force fresh fetch
+# Requires gh CLI, authenticated to read MemPalace/mempalace, and bun.
+cd server
+bun install
+bun run src/triage/cli.ts              # regenerate ISSUES.md at repo root
+bun run src/triage/cli.ts --audit-prs  # terminal report on flagged PRs
+bun run src/triage/cli.ts --no-cache   # force fresh fetch
 ```
 
 Then (if you have Claude Code) invoke the `triage-issues` skill for the deep
@@ -29,13 +33,19 @@ analysis layer on top of `ISSUES.md`. It writes `TRIAGE.md`.
 ## Quickstart (scheduled remote agent)
 
 This repo is also cloned by a scheduled Claude Code remote agent that runs
-weekday mornings. The agent runs `sync_issues.py`, reads the skill, does the
+weekday mornings. The agent runs the triage CLI, reads the skill, does the
 deep triage, and prints the report to the trigger run logs. Manage at
 https://claude.ai/code/scheduled
 
+## Running the full stack (server + dashboard)
+
+Long-running processes are managed by PM2 via ecosystem files at the repo
+root. See [CLAUDE.md](CLAUDE.md) for the PM2 commands. TL;DR: `pm2 start
+ecosystem.dev.config.cjs` for dev, `pm2 start ecosystem.config.cjs` for prod.
+
 ## Output conventions
 
-- `ISSUES.md` — heuristic output from `sync_issues.py` (regenerated every run)
+- `ISSUES.md` — heuristic output from the triage CLI (regenerated every run)
 - `TRIAGE.md` — curated deep-triage report from the skill (regenerated)
 - `.cache/` — fetched issue/PR/diff data, 6h TTL, gitignored
 
@@ -44,7 +54,8 @@ snapshots, not historical records.
 
 ## Tuning heuristics
 
-All keyword banks and regex patterns live at the top of `sync_issues.py`:
+All keyword banks and regex patterns live in
+[`server/src/triage/constants.ts`](server/src/triage/constants.ts):
 
 - `CRITICAL_KEYWORDS` / `HIGH_KEYWORDS` — severity signals
 - `FEATURE_TITLE_PREFIX` / `BUG_TITLE_PREFIX` — issue type markers

@@ -1,0 +1,76 @@
+<main class="max-w-[1400px] mx-auto px-8 py-10">
+  <app-dashboard-header
+    [connectionState]="rt.state()"
+    [lastUpdated]="rt.lastUpdated()"
+  />
+
+  <section class="mt-10">
+    <app-stats-grid [stats]="rt.stats()" />
+  </section>
+
+  <!-- Heuristic alerts -->
+  <section class="mt-12">
+    <header class="flex items-center gap-3 mb-4">
+      <h2 class="text-xl font-semibold">Heuristic alerts</h2>
+      <span class="text-xs text-fg-muted">open only</span>
+      <div class="flex items-center gap-2 ml-auto">
+        <app-badge
+          [label]="criticalItems().length + ' critical'"
+          tone="red"
+        />
+        <app-badge [label]="highItems().length + ' high'" tone="orange" />
+      </div>
+    </header>
+    <app-triage-table
+      [items]="alertItems()"
+      [emptyMessage]="items().length === 0 ? 'Waiting for snapshot…' : 'No heuristic-critical or high open items.'"
+    />
+  </section>
+
+  <!-- Suspicious PRs — grouped by tier -->
+  <section class="mt-12">
+    <header class="flex items-center gap-3 mb-4 flex-wrap">
+      <h2 class="text-xl font-semibold">Suspicious open PRs</h2>
+      <span class="text-xs text-fg-muted"
+        >sorted by risk tier · highest first</span
+      >
+      @let counts = suspicionCounts();
+      <div class="flex items-center gap-1.5 ml-auto flex-wrap">
+        @if (counts.critical > 0) {
+          <app-badge [label]="counts.critical + ' exec risk'" tone="red" />
+        }
+        @if (counts.high > 0) {
+          <app-badge [label]="counts.high + ' trust boundary'" tone="orange" />
+        }
+        @if (counts.medium > 0) {
+          <app-badge [label]="counts.medium + ' supply-chain'" tone="purple" />
+        }
+        @if (counts.low > 0) {
+          <app-badge [label]="counts.low + ' large diff'" tone="yellow" />
+        }
+      </div>
+    </header>
+    <app-triage-table [items]="suspiciousPrs()" emptyMessage="None flagged." />
+  </section>
+
+  <!-- Priority queues -->
+  <section class="mt-12">
+    <header class="flex items-center gap-3 mb-4">
+      <h2 class="text-xl font-semibold">Priority queues</h2>
+      <span class="text-xs text-fg-muted"
+        >(priorities set via MCP in M2 — currently unused)</span
+      >
+    </header>
+    <app-priority-queues [items]="items()" />
+  </section>
+
+  <footer
+    class="mt-16 pt-6 border-t border-border text-xs text-fg-muted flex justify-between"
+  >
+    <span>MemPalace Triage Server · v0.1.0 · M1 (read-only)</span>
+    <span>
+      {{ items().length }} items indexed ·
+      {{ rt.state() === 'open' ? 'streaming live' : 'reconnecting…' }}
+    </span>
+  </footer>
+</main>

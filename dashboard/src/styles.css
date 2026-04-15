@@ -1,0 +1,39 @@
+@import 'tailwindcss';
+
+/*
+ * GitHub-dark palette ported from pr-review-dashboard.html.
+ * In Tailwind v4, colors declared inside @theme become utility classes
+ * automatically (e.g. bg-bg, text-accent-red, border-border, bg-accent-blue/10).
+ */
+@theme {
+  --color-bg: #0d1117;
+  --color-surface: #161b22;
+  --color-surface-2: #1c222b;
+  --color-border: #30363d;
+  --color-border-strong: #3d444d;
+
+  --color-fg: #e6edf3;
+  --color-fg-muted: #8b949e;
+
+  --color-accent-green: #3fb950;
+  --color-accent-yellow: #d29922;
+  --color-accent-red: #f85149;
+  --color-accent-blue: #58a6ff;
+  --color-accent-purple: #bc8cff;
+  --color-accent-orange: #f0883e;
+  --color-accent-cyan: #39d2c0;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+}

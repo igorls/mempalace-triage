@@ -2,8 +2,8 @@
 name: triage-issues
 description: >
   Deep triage pass over MemPalace/mempalace issues and PRs that goes beyond
-  what sync_issues.py can do with heuristics alone. Re-reads issue
-  bodies and PR diffs to produce: real severity assessment, semantic
+  what the heuristic triage module (server/src/triage) can do alone. Re-reads
+  issue bodies and PR diffs to produce: real severity assessment, semantic
   deduplication, malicious-PR review, and a ranked next-action list.
   Writes TRIAGE.md. Use when the user says "triage issues", "triage
   report", invokes /triage-issues, or asks for a deep review of the backlog.
@@ -12,9 +12,10 @@ description: >
 # Deep Triage — MemPalace Issues & PRs
 
 You are running a full triage pass on `MemPalace/mempalace`. The heuristic
-script `sync_issues.py` does keyword classification and pattern-based
-PR flagging; your job is to do the part heuristics cannot: actually read
-bodies and diffs, judge context, and produce an actionable report.
+triage module (`server/src/triage/`, invoked via the CLI below) does keyword
+classification and pattern-based PR flagging; your job is to do the part
+heuristics cannot: actually read bodies and diffs, judge context, and produce
+an actionable report.
 
 **Output:** `TRIAGE.md` (overwrite, don't version). Keep it short and
 decision-oriented — not a dump of everything you read.
@@ -27,9 +28,14 @@ different scope (e.g., "just PR review", "include medium"), follow that.
 
 ### Step 1 — Refresh heuristic data
 
-Run `python sync_issues.py` to regenerate `ISSUES.md`. If the
-file is less than 1 hour old, it's fine to skip (use `--no-cache` if you
-suspect staleness). Read `ISSUES.md` to get the current CRITICAL /
+Run the triage CLI from `server/` to regenerate `ISSUES.md`:
+
+```bash
+cd server && bun run src/triage/cli.ts
+```
+
+If `ISSUES.md` is less than 1 hour old, it's fine to skip (pass `--no-cache`
+if you suspect staleness). Read `ISSUES.md` to get the current CRITICAL /
 HIGH lists and flagged PRs.
 
 ### Step 2 — Real severity assessment

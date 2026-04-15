@@ -1,0 +1,32 @@
+# Maintainers allowlist for mempalace-triage server.
+#
+# Seeded from the upstream CODEOWNERS file at
+# https://github.com/MemPalace/mempalace/blob/main/.github/CODEOWNERS
+# (* @milla-jovovich @bensig @igorls).
+#
+# Only GitHub logins listed here can authenticate as a maintainer and receive
+# an MCP agent token. Remove from this file → cascade-revoke all their tokens
+# on next server restart (or via the admin endpoint once M4 ships).
+#
+# Roles:
+#   - owner       full access, can force-release others' claims, revoke tokens
+#   - maintainer  standard triage access
+#   - agent       automated bots (e.g. the server-side triage worker)
+
+[[maintainer]]
+github_login = "milla-jovovich"
+role = "owner"
+
+[[maintainer]]
+github_login = "bensig"
+role = "owner"
+
+[[maintainer]]
+github_login = "igorls"
+display_name = "Igor Lins e Silva"
+role = "owner"
+
+[[maintainer]]
+github_login = "mempalace-triage-agent"
+display_name = "Triage Agent (server-side)"
+role = "agent"
