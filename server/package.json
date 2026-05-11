@@ -11,13 +11,17 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun src/db/migrate.ts",
     "sync:once": "bun src/sync/poller.ts --once",
-    "triage": "bun src/triage/cli.ts"
+    "triage": "bun src/triage/cli.ts",
+    "token": "bun src/cli/token.ts",
+    "mcp:smoke": "bun scripts/mcp-smoke.ts"
   },
   "dependencies": {
-    "elysia": "^1.1.25",
     "@elysiajs/cors": "^1.1.1",
     "@elysiajs/static": "^1.1.1",
-    "drizzle-orm": "^0.36.4"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "drizzle-orm": "^0.36.4",
+    "elysia": "^1.1.25",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bun": "^1.1.14",

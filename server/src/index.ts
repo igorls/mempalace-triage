@@ -4,8 +4,10 @@ import { resolve } from "node:path";
 import { Elysia } from "elysia";
 import { syncMaintainersFromConfig } from "@/auth/allowlist";
 import { db } from "@/db/client";
+import { agentApi } from "@/api/agent";
 import { publicApi } from "@/api/public";
 import { wsApi } from "@/api/ws";
+import { handleMcpRequest } from "@/mcp/server";
 import { startPollerLoop } from "@/sync/poller";
 
 // ─── Startup: migrations + maintainers seed ──────────────────────────────────
@@ -37,7 +39,11 @@ const DASHBOARD_DIST = process.env.DASHBOARD_DIST;
 const app = new Elysia()
   .use(cors({ origin: true, credentials: true }))
   .get("/healthz", () => ({ ok: true, ts: Date.now() }))
+  // MCP transport mounted before the typed Elysia routes so it sees the raw
+  // request body — the transport reads JSON-RPC itself. Handles POST/GET/DELETE.
+  .all("/mcp", ({ request }) => handleMcpRequest(request))
   .use(publicApi)
+  .use(agentApi)
   .use(wsApi);
 
 if (DASHBOARD_DIST) {
