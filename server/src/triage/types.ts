@@ -2,6 +2,40 @@ export type IssueState = "OPEN" | "CLOSED";
 export type PrState = "OPEN" | "CLOSED" | "MERGED";
 export type Severity = "critical" | "high" | "normal";
 
+// GitHub `pullRequest.mergeable` — the structural conflict state.
+export type Mergeable = "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+
+// GitHub `pullRequest.mergeStateStatus` — combined mergeability across
+// conflicts, CI, reviews, and branch protections. UNKNOWN means GitHub
+// hadn't computed it yet at fetch time.
+export type MergeStateStatus =
+  | "CLEAN"
+  | "DIRTY"
+  | "BLOCKED"
+  | "BEHIND"
+  | "UNSTABLE"
+  | "HAS_HOOKS"
+  | "DRAFT"
+  | "UNKNOWN";
+
+// GitHub `pullRequest.reviewDecision` — null when no review is required.
+export type ReviewDecision =
+  | "APPROVED"
+  | "CHANGES_REQUESTED"
+  | "REVIEW_REQUIRED"
+  | null;
+
+// Rolled-up CI conclusion across `statusCheckRollup`. `none` means no
+// checks have run (or none were configured).
+export type ChecksConclusion = "success" | "failure" | "pending" | "none";
+
+export interface CheckRun {
+  name: string;
+  conclusion: string | null;
+  status: string | null;
+  workflow: string | null;
+}
+
 // Re-exported for downstream consumers (DB, API, dashboard DTOs).
 export type { SuspicionLevel } from "./constants";
 
@@ -44,6 +78,17 @@ export interface PR {
   modules: string[];
   linked_issues: number[];
   first_time_author: boolean;
+  /**
+   * GitHub mergeability + CI rollup. Bulk `gh pr list` returns reliable
+   * `mergeable`/`merge_state_status` for most PRs; `checks` requires a
+   * per-PR `gh pr view` refresh (handled by {@link enrichPrs}).
+   */
+  mergeable: Mergeable;
+  merge_state_status: MergeStateStatus;
+  review_decision: ReviewDecision;
+  /** Derived rollup across `checks`. `none` if no checks ran. */
+  checks_conclusion: ChecksConclusion;
+  checks: CheckRun[];
 }
 
 export interface DuplicatePair {

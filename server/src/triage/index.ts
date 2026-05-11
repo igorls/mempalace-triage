@@ -11,9 +11,10 @@ export {
   fetchIssues,
   fetchPrs,
   fetchPrDiff,
+  fetchPrChecks,
   fetchAuthorHistory,
 } from "./gh";
-export { enrichIssues, enrichPrs, runSync } from "./pipeline";
+export { enrichIssues, enrichPrs, rollUpChecks, runSync } from "./pipeline";
 export { renderMarkdown } from "./render";
-export { printPrAudit, printNoiseReport } from "./audit";
+export { printMergeableReport, printNoiseReport, printPrAudit } from "./audit";
 export { diffAgainstPrevious } from "./delta";

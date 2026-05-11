@@ -87,6 +87,15 @@ export function renderMarkdown(
   const featsLabeled = openIssues.filter((i) => i.labels.includes("enhancement"));
   const noise = openIssues.filter((i) => i.is_noise);
   const suspiciousPrs = openPrs.filter((p) => p.suspicious_flags.length > 0);
+  // "Ready to merge": no conflicts (CLEAN), and either green CI or no checks
+  // configured. Excludes BLOCKED (review-gated) and UNSTABLE.
+  const readyToMerge = openPrs.filter(
+    (p) =>
+      p.merge_state_status === "CLEAN" &&
+      (p.checks_conclusion === "success" || p.checks_conclusion === "none"),
+  );
+  const failingCi = openPrs.filter((p) => p.checks_conclusion === "failure");
+  const conflictingPrs = openPrs.filter((p) => p.merge_state_status === "DIRTY");
 
   const lines: string[] = [];
   lines.push("# MemPalace Issue Tracker\n");
@@ -195,6 +204,52 @@ export function renderMarkdown(
     lines.push("");
   }
 
+  // ─── Ready to merge ────────────────────────────────────────────────────────
+  lines.push(`## Ready to merge (${readyToMerge.length})\n`);
+  lines.push(
+    "Open PRs where GitHub reports `mergeStateStatus: CLEAN` and either all " +
+      "checks passed or no checks were configured. These are the PRs a " +
+      "maintainer can land without further action.\n",
+  );
+  if (readyToMerge.length > 0) {
+    lines.push("| # | Branch | Title | Author | Filed | Checks |");
+    lines.push("|---|---|---|---|---|---|");
+    for (const pr of byNumberDesc(readyToMerge)) {
+      lines.push(
+        `| ${link(pr.number, true)} | \`${pr.branch}\` | ${escapePipe(pr.title)} | ` +
+          `${pr.author} | ${pr.created_at.slice(0, 10)} | ${pr.checks_conclusion} |`,
+      );
+    }
+  }
+  lines.push("");
+
+  // ─── Failing CI ────────────────────────────────────────────────────────────
+  if (failingCi.length > 0) {
+    lines.push(`## PRs failing CI (${failingCi.length})\n`);
+    lines.push("| # | Branch | Title | Merge state |");
+    lines.push("|---|---|---|---|");
+    for (const pr of byNumberDesc(failingCi)) {
+      lines.push(
+        `| ${link(pr.number, true)} | \`${pr.branch}\` | ${escapePipe(pr.title)} | ` +
+          `${pr.merge_state_status} |`,
+      );
+    }
+    lines.push("");
+  }
+
+  // ─── Conflicting ───────────────────────────────────────────────────────────
+  if (conflictingPrs.length > 0) {
+    lines.push(`## PRs with merge conflicts (${conflictingPrs.length})\n`);
+    lines.push("| # | Branch | Title |");
+    lines.push("|---|---|---|");
+    for (const pr of byNumberDesc(conflictingPrs)) {
+      lines.push(
+        `| ${link(pr.number, true)} | \`${pr.branch}\` | ${escapePipe(pr.title)} |`,
+      );
+    }
+    lines.push("");
+  }
+
   // ─── Suspicious PRs ────────────────────────────────────────────────────────
   lines.push(`## PRs flagged for review (${suspiciousPrs.length})\n`);
   lines.push(
@@ -253,6 +308,9 @@ export function renderMarkdown(
   lines.push(`|   of which labeled \`enhancement\` | ${featsLabeled.length} |`);
   lines.push(`|   of which noise candidates | ${noise.length} |`);
   lines.push(`| Open PRs | ${openPrs.length} |`);
+  lines.push(`|   of which ready to merge | ${readyToMerge.length} |`);
+  lines.push(`|   of which failing CI | ${failingCi.length} |`);
+  lines.push(`|   of which conflicting | ${conflictingPrs.length} |`);
   lines.push(`|   of which flagged for review | ${suspiciousPrs.length} |`);
   lines.push(`| Merged (last 14d) | ${recentMerged.length} |`);
   lines.push(`| Closed issues (last 14d) | ${recentClosed.length} |`);

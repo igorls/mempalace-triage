@@ -75,6 +75,32 @@ export const triageItems = sqliteTable(
     prDeletions: integer("pr_deletions"),
     prFiles: text("pr_files", { mode: "json" }).$type<string[]>(),
     prLinkedIssues: text("pr_linked_issues", { mode: "json" }).$type<number[]>(),
+    // GitHub mergeability + CI rollup. Always overwritten by the poller —
+    // never preserved across syncs (these are upstream-derived signals).
+    prMergeable: text("pr_mergeable", {
+      enum: ["MERGEABLE", "CONFLICTING", "UNKNOWN"],
+    }),
+    prMergeState: text("pr_merge_state", {
+      enum: [
+        "CLEAN",
+        "DIRTY",
+        "BLOCKED",
+        "BEHIND",
+        "UNSTABLE",
+        "HAS_HOOKS",
+        "DRAFT",
+        "UNKNOWN",
+      ],
+    }),
+    prReviewDecision: text("pr_review_decision", {
+      enum: ["APPROVED", "CHANGES_REQUESTED", "REVIEW_REQUIRED"],
+    }),
+    prChecksConclusion: text("pr_checks_conclusion", {
+      enum: ["success", "failure", "pending", "none"],
+    }),
+    prChecks: text("pr_checks", { mode: "json" }).$type<
+      { name: string; conclusion: string | null; status: string | null; workflow: string | null }[]
+    >(),
     priority: text("priority", {
       enum: ["P0", "P1", "P2", "P3", "none"],
     })
@@ -136,6 +162,12 @@ export const triageItems = sqliteTable(
     statusIdx: index("triage_items_status_idx").on(t.triageStatus),
     priorityIdx: index("triage_items_priority_idx").on(t.priority),
     kindStateIdx: index("triage_items_kind_state_idx").on(t.kind, t.githubState),
+    // Dashboard "ready to merge" / "failing CI" filters scan by these two
+    // columns together — most PR queries care about the combination.
+    mergeReadyIdx: index("triage_items_merge_ready_idx").on(
+      t.prMergeState,
+      t.prChecksConclusion,
+    ),
   }),
 );
 

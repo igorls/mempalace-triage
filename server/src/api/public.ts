@@ -69,6 +69,11 @@ export const publicApi = new Elysia({ prefix: "/api" })
           prAdditions: triageItems.prAdditions,
           prDeletions: triageItems.prDeletions,
           prLinkedIssues: triageItems.prLinkedIssues,
+          prMergeable: triageItems.prMergeable,
+          prMergeState: triageItems.prMergeState,
+          prReviewDecision: triageItems.prReviewDecision,
+          prChecksConclusion: triageItems.prChecksConclusion,
+          prChecks: triageItems.prChecks,
         })
         .from(triageItems)
         .leftJoin(
@@ -197,6 +202,21 @@ export const publicApi = new Elysia({ prefix: "/api" })
         ),
         heuristicHigh: count(
           "severity_heuristic = 'high' AND github_state = 'OPEN'",
+        ),
+        // Mergeability rollups across OPEN PRs. "Ready to merge" is the
+        // intersection that the dashboard wants front-and-center.
+        prReadyToMerge: count(
+          "kind = 'pr' AND github_state = 'OPEN' AND pr_merge_state = 'CLEAN' " +
+            "AND pr_checks_conclusion IN ('success','none')",
+        ),
+        prFailingChecks: count(
+          "kind = 'pr' AND github_state = 'OPEN' AND pr_checks_conclusion = 'failure'",
+        ),
+        prConflicting: count(
+          "kind = 'pr' AND github_state = 'OPEN' AND pr_merge_state = 'DIRTY'",
+        ),
+        prBlockedByReview: count(
+          "kind = 'pr' AND github_state = 'OPEN' AND pr_merge_state = 'BLOCKED'",
         ),
       })
       .from(triageItems);

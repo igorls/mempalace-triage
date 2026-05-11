@@ -1,6 +1,6 @@
 import { dirname } from "node:path";
 import { mkdirSync } from "node:fs";
-import { printNoiseReport, printPrAudit } from "./audit";
+import { printMergeableReport, printNoiseReport, printPrAudit } from "./audit";
 import { DEFAULT_OUTPUT, REPO } from "./constants";
 import { diffAgainstPrevious } from "./delta";
 import { fetchIssues, fetchPrs } from "./gh";
@@ -13,6 +13,7 @@ interface CliArgs {
   skipDiffs: boolean;
   jsonOut: boolean;
   auditPrs: boolean;
+  mergeableReport: boolean;
   noiseReport: boolean;
   dryRun: boolean;
   output: string;
@@ -24,14 +25,15 @@ const HELP = `Usage: bun run src/triage/cli.ts [options]
 Heuristic triage of ${REPO}.
 
 Options:
-  --no-cache       Bypass on-disk cache, fetch fresh from GitHub
-  --skip-diffs     Skip PR diff scans (faster, no diff-based red flags)
-  --json           Emit enriched payload as JSON on stdout; don't write ISSUES.md
-  --audit-prs      Print suspicious-PR audit report; don't write ISSUES.md
-  --noise-report   Print noise candidate list; don't write ISSUES.md
-  --dry-run        Print summary of what would be written; don't touch ISSUES.md
-  --output PATH    Output path (default: ${DEFAULT_OUTPUT})
-  -h, --help       Show this help
+  --no-cache           Bypass on-disk cache, fetch fresh from GitHub
+  --skip-diffs         Skip PR diff scans (faster, no diff-based red flags)
+  --json               Emit enriched payload as JSON on stdout; don't write ISSUES.md
+  --audit-prs          Print suspicious-PR audit report; don't write ISSUES.md
+  --mergeable-report   Print PRs grouped by mergeability (ready / failing CI / etc.)
+  --noise-report       Print noise candidate list; don't write ISSUES.md
+  --dry-run            Print summary of what would be written; don't touch ISSUES.md
+  --output PATH        Output path (default: ${DEFAULT_OUTPUT})
+  -h, --help           Show this help
 `;
 
 function parseArgs(argv: string[]): CliArgs {
@@ -40,6 +42,7 @@ function parseArgs(argv: string[]): CliArgs {
     skipDiffs: false,
     jsonOut: false,
     auditPrs: false,
+    mergeableReport: false,
     noiseReport: false,
     dryRun: false,
     output: DEFAULT_OUTPUT,
@@ -59,6 +62,9 @@ function parseArgs(argv: string[]): CliArgs {
         break;
       case "--audit-prs":
         args.auditPrs = true;
+        break;
+      case "--mergeable-report":
+        args.mergeableReport = true;
         break;
       case "--noise-report":
         args.noiseReport = true;
@@ -102,6 +108,10 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
   if (args.auditPrs) {
     printPrAudit(prs);
+    return 0;
+  }
+  if (args.mergeableReport) {
+    printMergeableReport(prs);
     return 0;
   }
   if (args.noiseReport) {
