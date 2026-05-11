@@ -42,6 +42,15 @@ export const CRITICAL_KEYWORDS: string[] = [
   // catastrophic semantics
   "\\bsingle point of failure\\b", "\\bSPOF\\b",
   "\\bpalace data gone\\b", "\\bbreaks existing\\b",
+  // release / packaging defects — added after #1093 slipped through classified
+  // as "normal". These catch install-time regressions the runtime-symptom
+  // vocabulary above misses.
+  "\\brelease defect\\b", "\\bbroken install\\b",
+  "\\bfresh install\\b.*\\bfail",
+  "\\bentry point\\b.*\\bmissing\\b",
+  "\\bpip install\\b.*\\bfail",
+  "\\bcommand not found\\b", "\\bexecutable file not found\\b",
+  "\\bv\\d+\\.\\d+\\.\\d+\\b.*\\brelease defect\\b",
 ];
 
 export const HIGH_KEYWORDS: string[] = [
@@ -51,6 +60,12 @@ export const HIGH_KEYWORDS: string[] = [
   "\\bsurrogate error\\b", "\\bencoding (crash|error|failure)\\b",
   "\\bstale (cache|index|results)\\b",
   "\\bre-process\\w* every\\b",
+  // Packaging / plugin manifest drift — flags issues that touch the release
+  // surface (plugin.json, pyproject.toml) before they escalate to broken
+  // installs. Paired with the CRITICAL additions so near-misses still surface.
+  "\\bplugin\\.json\\b", "\\bpyproject\\.toml\\b",
+  "\\bconsole script\\b", "\\bentry point\\b",
+  "\\bpipx\\b", "\\buv compat\\w*\\b",
 ];
 
 // RegExp objects (not strings) because one pattern needs the `u` flag to
@@ -67,6 +82,27 @@ export const NOISE_TITLE_PATTERNS: RegExp[] = [
   // Only punctuation / emoji. `\p{L}\p{N}_` = any Unicode letter/number + `_`
   // (Python's default `\w`). Requires the `u` flag.
   /^[^\p{L}\p{N}_]+$/iu,
+  // Hysterical / fear-post titles — real users, real distress, no actionable
+  // content. "!! X !!" wrapping, or ALL-CAPS fear verbs with no specifics
+  // (no file, no version, no reproducer). Added after #1079 ("!! MY MAC HAS
+  // BEEN COMPROMISED !!") slipped through as CRITICAL via its body keywords.
+  /^\s*!!.*!!\s*$/,
+  /\b(COMPROMISED|HACKED|HIJACKED|POSSESSED|STOLEN)\b/,
+];
+
+// Meta-reports bundle multiple bugs into one issue ("Security Audit: 8
+// unreported vulnerabilities," "bug: 7 issues in v3.0.0→v3.3.0"). They
+// often trip keyword heuristics because each bullet inside describes a real
+// problem — but the issue as a whole is not actionable without a split.
+// These titles demote the severity by one tier (critical → high, high →
+// normal) so the queue reflects what's actually mergeable, not the union
+// of every bug anyone ever typed into one report.
+export const META_REPORT_TITLE_PATTERNS: RegExp[] = [
+  // "N issues / bugs / bug fixes / vulnerabilities / problems / defects"
+  /\b\d+\s+(issues?|bugs?(\s*fixes?)?|vulnerabilit|problems?|defects?|reports?)\b/i,
+  /^\s*(security audit|bug report|code review|audit|review)\s*[:\-—]/i,
+  /\bunreported (vulnerabilit|bugs|issues)\b/i,
+  /\b(Executive Summary|Findings|Scope)\b.*\b(vulnerabilit|issues|bugs)\b/i,
 ];
 
 export const NOISE_BODY_PATTERNS: RegExp[] = [
