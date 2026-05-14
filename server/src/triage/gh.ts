@@ -173,7 +173,7 @@ export async function fetchIssues(useCache = true): Promise<Issue[]> {
   const raw = await ghJson<RawIssue[]>(
     [
       "issue", "list", "--repo", REPO, "--state", "all",
-      "--limit", "500",
+      "--limit", "1000",
       "--json", "number,title,state,labels,author,body,createdAt,closedAt",
     ],
     "issues.json",
@@ -191,7 +191,7 @@ export async function fetchPrs(useCache = true): Promise<PR[]> {
   const raw = await ghJson<RawPR[]>(
     [
       "pr", "list", "--repo", REPO, "--state", "all",
-      "--limit", "500",
+      "--limit", "1000",
       "--json",
       "number,title,state,labels,author,body,headRefName," +
         "createdAt,mergedAt,closedAt,additions,deletions,files",

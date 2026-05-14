@@ -100,22 +100,48 @@ async function refreshPrMergeability(pr: PR, useCache: boolean): Promise<void> {
   pr.checks_conclusion = rollUpChecks(pr.checks);
 }
 
+async function runWithLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let index = 0;
+  const workers = Array.from({ length: limit }, async () => {
+    while (index < items.length) {
+      const currentIndex = index++;
+      results[currentIndex] = await fn(items[currentIndex]!);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 export async function enrichPrs(
   prs: PR[],
   useCache: boolean,
   scanDiffs = true,
 ): Promise<PR[]> {
   const authorCache = new Map<string, number>();
+  const uniqueAuthors = [...new Set(prs.map((p) => p.author))];
 
-  for (const pr of prs) {
-    if (!authorCache.has(pr.author)) {
-      authorCache.set(pr.author, await fetchAuthorHistory(pr.author, useCache));
-    }
-    let diff = "";
-    // Only scan diffs for OPEN PRs (performance + relevance).
-    if (scanDiffs && pr.state === "OPEN") {
-      diff = await fetchPrDiff(pr.number, useCache);
-    }
+  // 1. Fetch author histories with controlled concurrency
+  await runWithLimit(uniqueAuthors, 10, async (author) => {
+    const count = await fetchAuthorHistory(author, useCache);
+    authorCache.set(author, count);
+  });
+
+  // 2. Process PRs: diffs, suspicion, and mergeability
+  await runWithLimit(prs, 10, async (pr) => {
+    const diffPromise = (scanDiffs && pr.state === "OPEN")
+      ? fetchPrDiff(pr.number, useCache)
+      : Promise.resolve("");
+
+    const mergeabilityPromise = refreshPrMergeability(pr, useCache);
+
+    // Fetch diff and mergeability concurrently for this PR
+    const [diff] = await Promise.all([diffPromise, mergeabilityPromise]);
+    
     const { hardFlags, contextNotes, suspicionLevel } = analyzePrSuspicion(
       pr,
       diff,
@@ -126,8 +152,8 @@ export async function enrichPrs(
     pr.context_notes = contextNotes;
     pr.modules = crossReferenceModules(`${pr.title}\n${pr.body}`, pr.files);
     pr.linked_issues = extractLinkedIssues(pr);
-    await refreshPrMergeability(pr, useCache);
-  }
+  });
+
   return prs;
 }
 
