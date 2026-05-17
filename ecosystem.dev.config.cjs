@@ -30,7 +30,7 @@ module.exports = {
       name: 'mempalace-dashboard-dev',
       cwd: path.join(root, 'dashboard'),
       script: 'bun',
-      args: 'run start -- --host 0.0.0.0 --port 4200',
+      args: 'run start -- --host 0.0.0.0 --port 4317',
       interpreter: 'none',
       instances: 1,
       exec_mode: 'fork',

@@ -38,7 +38,7 @@ module.exports = {
       watch: false,
       env: {
         PM2_SERVE_PATH: path.join(root, 'dashboard', 'dist', 'dashboard', 'browser'),
-        PM2_SERVE_PORT: '4200',
+        PM2_SERVE_PORT: '4317',
         PM2_SERVE_SPA: 'true',
         PM2_SERVE_HOMEPAGE: '/index.html',
       },

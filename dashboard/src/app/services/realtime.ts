@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, inject, isDevMode, signal } from '@angular/core';
 import type {
   ActivityEntry,
   ConnectionState,
@@ -63,10 +63,12 @@ export class Realtime {
     if (typeof window === 'undefined') return '';
     const w = window as unknown as { __WS_URL__?: string };
     if (w.__WS_URL__) return w.__WS_URL__;
-    // Angular's ng serve runs on :4200 and can't easily proxy WS — in dev
-    // we hit the Bun server directly on :7800.
-    if (window.location.port === '4200') {
-      return 'ws://localhost:7800/ws';
+    // Angular's ng serve (dev) runs on its own port and can't easily proxy
+    // WS — hit the Bun server directly on :7800. isDevMode() is true only
+    // for the dev build, so this is port-independent (survives the dev
+    // dashboard port changing, unlike the old hardcoded :4200 check).
+    if (isDevMode()) {
+      return `ws://${window.location.hostname}:7800/ws`;
     }
     // Prod: WS is same-origin (bun serves both the dashboard and /ws).
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
